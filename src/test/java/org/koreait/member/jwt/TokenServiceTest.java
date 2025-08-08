@@ -1,4 +1,4 @@
-package org.koreait.jwt;
+package org.koreait.member.jwt;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

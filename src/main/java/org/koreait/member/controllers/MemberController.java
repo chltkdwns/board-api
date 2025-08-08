@@ -1,13 +1,17 @@
 package org.koreait.member.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.koreait.global.exceptions.BadRequestException;
 import org.koreait.global.libs.Utils;
+import org.koreait.member.entities.Member;
 import org.koreait.member.jwt.TokenService;
+import org.koreait.member.libs.MemberUtil;
 import org.koreait.member.services.JoinService;
 import org.koreait.member.validators.JoinValidator;
 import org.koreait.member.validators.TokenValidator;
@@ -26,6 +30,7 @@ public class MemberController {
     private final JoinService joinService;
     private final TokenValidator tokenValidator;
     private final TokenService tokenService;
+    private final MemberUtil memberUtil;
     private final Utils utils;
 
     @Operation(summary="회원가입처리", method = "POST")
@@ -50,6 +55,12 @@ public class MemberController {
      *
      * @return
      */
+    @Operation(summary = "회원 인증 처리", description = "이메일과 비밀번호로 인증한 후 회원 전용 요청을 보낼 수 있는 토큰(JWT)을 발급")
+    @Parameters({
+            @Parameter(name = "email", required = true, description = "이메일"),
+            @Parameter(name = "password", required = true, description = "비밀번호")
+    })
+    @ApiResponse(responseCode = "200", description = "인증 성공시 토큰(JWT) 발급")
     @PostMapping("/token")
     public String token(@Valid @RequestBody RequestToken form, Errors errors) {
 
@@ -62,15 +73,16 @@ public class MemberController {
         return tokenService.create(form.getEmail());
     }
 
-    @PreAuthorize("isAuthenticated()") //로그인 시에만 접근 가능
-    @GetMapping("/test1")
-    public void test1() {
-        System.out.println("로그인 시 접근 가능 - test1()");
-    }
-
-    @PreAuthorize("hasAnyAuthority('ADMIN')")
-    @GetMapping("/test2")
-    public void test2() {
-        System.out.println("관리자만 접근 가능 - test2()");
+    /**
+     * 로그인한 회원 정보 출력
+     *
+     * @return
+     */
+    @Operation(summary = "로그인 상태인 회원 정보를 조회", method = "GET")
+    @ApiResponse(responseCode = "200")
+    @GetMapping // GET /api/v1/member
+    @PreAuthorize("isAuthenticated()")
+    public Member myInfo() {
+        return  memberUtil.getMember();
     }
 }
